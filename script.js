@@ -226,6 +226,7 @@ document.querySelectorAll('.project-img').forEach(img => {
 
 
 /* ─── CONTACT FORM ─── */
+/* ─── CONTACT FORM ─── */
 const form = document.getElementById('contactForm');
 const successMsg = document.getElementById('formSuccess');
 
@@ -234,7 +235,7 @@ form.addEventListener('submit', e => {
   const name = form.querySelector('#name').value.trim();
   const email = form.querySelector('#email').value.trim();
   const message = form.querySelector('#message').value.trim();
-
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!name || !email || !message) {
     shakeForm();
     return;
@@ -246,24 +247,38 @@ form.addEventListener('submit', e => {
 
   submitBtn.disabled = true;
   btnText.textContent = 'Sending...';
-  btnIcon.textContent = '⏳';
+  btnIcon.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-  // Simulate async send
-  setTimeout(() => {
-    btnText.textContent = 'Sent!';
-    btnIcon.textContent = '✓';
-    submitBtn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
-    successMsg.classList.add('show');
-    form.reset();
-
-    setTimeout(() => {
-      submitBtn.disabled = false;
-      btnText.textContent = 'Send Message';
-      btnIcon.textContent = '→';
-      submitBtn.style.background = '';
-      successMsg.classList.remove('show');
-    }, 4000);
-  }, 1600);
+  fetch('https://formspree.io/f/mppwyavl', {
+    method: 'POST',
+    headers: { 'Accept': 'application/json' },
+    body: new FormData(form),
+  })
+    .then(response => {
+      if (response.ok) {
+        btnText.textContent = 'Sent!';
+        btnIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+        submitBtn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+        successMsg.classList.add('show');
+        form.reset();
+      } else {
+        throw new Error('Formspree responded with an error');
+      }
+    })
+    .catch(() => {
+      btnText.textContent = 'Failed — try again';
+      btnIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+      submitBtn.style.background = 'linear-gradient(135deg,#dc2626,#991b1b)';
+    })
+    .finally(() => {
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        btnText.textContent = 'Send Message';
+        btnIcon.innerHTML = '<i class="fa-solid fa-arrow-right"></i>';
+        submitBtn.style.background = '';
+        successMsg.classList.remove('show');
+      }, 4000);
+    });
 });
 
 function shakeForm() {
