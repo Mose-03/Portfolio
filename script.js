@@ -228,7 +228,17 @@ document.querySelectorAll('.project-img').forEach(img => {
 /* ─── CONTACT FORM ─── */
 /* ─── CONTACT FORM ─── */
 const form = document.getElementById('contactForm');
-const successMsg = document.getElementById('formSuccess');
+const tooltip = document.getElementById('formTooltip');
+let tooltipTimeout;
+
+function showTooltip(message, type = 'error') {
+  clearTimeout(tooltipTimeout);
+  tooltip.textContent = message;
+  tooltip.className = `form-tooltip show tooltip-${type}`;
+  tooltipTimeout = setTimeout(() => {
+    tooltip.classList.remove('show');
+  }, 4000);
+}
 
 form.addEventListener('submit', e => {
   e.preventDefault();
@@ -236,17 +246,22 @@ form.addEventListener('submit', e => {
   const email = form.querySelector('#email').value.trim();
   const message = form.querySelector('#message').value.trim();
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!name || !email || !message) {
+
+  if (!name || !message) {
     shakeForm();
+    showTooltip('Please fill in all required fields.', 'error');
+    return;
+  }
+  if (!email || !emailPattern.test(email)) {
+    shakeForm();
+    showTooltip('Please enter a valid email address.', 'error');
     return;
   }
 
   const submitBtn = form.querySelector('.btn-submit');
-  const btnText = submitBtn.querySelector('.btn-text');
   const btnIcon = submitBtn.querySelector('.btn-icon');
 
   submitBtn.disabled = true;
-  btnText.textContent = 'Sending...';
   btnIcon.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
   fetch('https://formspree.io/f/mppwyavl', {
@@ -256,28 +271,18 @@ form.addEventListener('submit', e => {
   })
     .then(response => {
       if (response.ok) {
-        btnText.textContent = 'Sent!';
-        btnIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
-        submitBtn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
-        successMsg.classList.add('show');
+        showTooltip("Message sent! I'll get back to you shortly.", 'success');
         form.reset();
       } else {
         throw new Error('Formspree responded with an error');
       }
     })
     .catch(() => {
-      btnText.textContent = 'Failed — try again';
-      btnIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-      submitBtn.style.background = 'linear-gradient(135deg,#dc2626,#991b1b)';
+      showTooltip('Something went wrong — please try again.', 'error');
     })
     .finally(() => {
-      setTimeout(() => {
-        submitBtn.disabled = false;
-        btnText.textContent = 'Send Message';
-        btnIcon.innerHTML = '<i class="fa-solid fa-arrow-right"></i>';
-        submitBtn.style.background = '';
-        successMsg.classList.remove('show');
-      }, 4000);
+      submitBtn.disabled = false;
+      btnIcon.innerHTML = '<i class="fa-solid fa-arrow-right"></i>';
     });
 });
 
